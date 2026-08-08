@@ -17,7 +17,7 @@ final chopper = ChopperClient(
 Each outbound request opens a CLIENT span:
 - name: `HTTP <METHOD>` (low cardinality — span name doesn't
   include URL path)
-- `http.request.method`, `http.method` (legacy)
+- `http.request.method`
 - `url.full`, `server.address`, `server.port`
 - `http.response.status_code` on completion
 - W3C `traceparent` header injected so the server side can stitch

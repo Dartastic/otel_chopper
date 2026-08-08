@@ -75,7 +75,8 @@ void main() {
       expect(span.name, equals('HTTP GET'));
       final attrs = _attrs(span);
       expect(attrs['http.request.method'], equals('GET'));
-      expect(attrs['http.method'], equals('GET'));
+      // Deprecated legacy key must NOT be emitted.
+      expect(attrs.containsKey('http.method'), isFalse);
       expect(attrs['url.full'], contains('/v1/users'));
       expect(attrs['server.address'], equals('api.example.com'));
       expect(attrs['http.response.status_code'], equals(200));

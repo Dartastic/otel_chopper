@@ -27,7 +27,7 @@ const _tracerName = 'otel_chopper';
 /// - **Name**: `HTTP <METHOD>` (e.g. `HTTP GET`) — low cardinality.
 /// - **Kind**: `CLIENT`
 /// - **Attributes**:
-///   - `http.method` / `http.request.method`
+///   - `http.request.method`
 ///   - `url.full` (the full request URL)
 ///   - `server.address`, `server.port` (parsed from the URL)
 ///   - `http.response.status_code` (on success)
@@ -56,15 +56,13 @@ class OTelChopperInterceptor implements Interceptor {
     final method = request.method.toUpperCase();
 
     final attrs = <String, Object>{
-      Http.requestMethod.key: method,
-      // Legacy key — kept for compatibility with older backends.
-      'http.method': method,
+      Http.httpRequestMethod.key: method,
       Url.urlFull.key: url.toString(),
     };
     if (url.host.isNotEmpty) {
-      attrs[ServerResource.serverAddress.key] = url.host;
+      attrs[Server.serverAddress.key] = url.host;
     }
-    if (url.hasPort) attrs[ServerResource.serverPort.key] = url.port;
+    if (url.hasPort) attrs[Server.serverPort.key] = url.port;
 
     final span = _tracer.startSpan(
       'HTTP $method',
@@ -85,7 +83,7 @@ class OTelChopperInterceptor implements Interceptor {
       final response = await chain.proceed(tracedRequest);
       span.addAttributes(OTel.attributes([
         OTel.attributeInt(
-          Http.responseStatusCode.key,
+          Http.httpResponseStatusCode.key,
           response.statusCode,
         ),
       ]));
@@ -99,7 +97,7 @@ class OTelChopperInterceptor implements Interceptor {
     } catch (e, st) {
       span.addAttributes(OTel.attributes([
         OTel.attributeString(
-          ErrorResource.errorType.key,
+          ErrorAttributes.errorType.key,
           e.runtimeType.toString(),
         ),
       ]));
