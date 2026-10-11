@@ -4,7 +4,7 @@
 import 'dart:async';
 
 import 'package:chopper/chopper.dart';
-import 'package:dartastic_opentelemetry/dartastic_opentelemetry.dart';
+import 'package:dartastic_opentelemetry_api/dartastic_opentelemetry_api.dart';
 
 import 'chopper_suppression.dart';
 
@@ -37,11 +37,10 @@ class OTelChopperInterceptor implements Interceptor {
   ///
   /// - [tracer] — defaults to
   ///   `OTel.tracerProvider().getTracer('otel_chopper')`.
-  OTelChopperInterceptor({Tracer? tracer})
-      : _tracer = tracer ?? OTel.tracerProvider().getTracer(_tracerName);
+  OTelChopperInterceptor({APITracer? tracer})
+      : _tracer = tracer ?? OTelAPI.tracerProvider().getTracer(_tracerName);
 
-  final Tracer _tracer;
-  final _propagator = W3CTraceContextPropagator();
+  final APITracer _tracer;
 
   @override
   FutureOr<Response<BodyType>> intercept<BodyType>(
@@ -67,12 +66,13 @@ class OTelChopperInterceptor implements Interceptor {
     final span = _tracer.startSpan(
       'HTTP $method',
       kind: SpanKind.client,
-      attributes: OTel.attributesFromMap(attrs),
+      attributes: OTelAPI.attributesFromMap(attrs),
     );
 
-    // Inject traceparent into the request headers.
+    // Inject context with the app's configured propagators (W3C trace
+    // context + baggage by default; OTEL_PROPAGATORS overrides).
     final mutableHeaders = Map<String, String>.from(request.headers);
-    _propagator.inject(
+    OTelAPI.textMapPropagator.inject(
       Context.current.withSpan(span),
       mutableHeaders,
       _MapSetter(mutableHeaders),
@@ -81,8 +81,8 @@ class OTelChopperInterceptor implements Interceptor {
 
     try {
       final response = await chain.proceed(tracedRequest);
-      span.addAttributes(OTel.attributes([
-        OTel.attributeInt(
+      span.addAttributes(OTelAPI.attributes([
+        OTelAPI.attributeInt(
           Http.httpResponseStatusCode.key,
           response.statusCode,
         ),
@@ -95,8 +95,8 @@ class OTelChopperInterceptor implements Interceptor {
       }
       return response;
     } catch (e, st) {
-      span.addAttributes(OTel.attributes([
-        OTel.attributeString(
+      span.addAttributes(OTelAPI.attributes([
+        OTelAPI.attributeString(
           ErrorAttributes.errorType.key,
           e.runtimeType.toString(),
         ),
