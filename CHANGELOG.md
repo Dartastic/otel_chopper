@@ -1,13 +1,19 @@
 # Changelog
 
-## [1.0.0-wip]
+## [0.3.0-wip]
 
 ### Changed
 
-- Requires `dartastic_opentelemetry ^1.1.0-beta.17` and
-  `dartastic_opentelemetry_api >=1.0.0-rc.4 <1.0.0-rc.5`.
-- First 1.0 release: the public API of this package is stable and
-  follows semantic versioning from here on.
+- Requires `dartastic_opentelemetry_api >=1.0.0-rc.4 <1.0.0-rc.5`.
+- Context is propagated with the app's configured propagators
+  (`OTelAPI.textMapPropagator`: W3C trace context and baggage by
+  default, `OTEL_PROPAGATORS` to change them) instead of a fixed W3C
+  propagator.
+- **Breaking:** depends on `dartastic_opentelemetry_api` only, no
+  longer on the SDK. The application chooses and initializes the
+  OpenTelemetry SDK. Parameters and fields typed with SDK classes
+  now use the API types (`APITracer`, `APISpan`, `APILogger`, ...);
+  SDK instances are still accepted wherever an API type is expected.
 
 ## [0.2.0] - 2026-08-08
 
